@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+# from .routes import auth, payment, user, inventory, admin, e_commerce, chatbot
 from .routes import auth, payment, user, inventory, admin, e_commerce
 from .database import engine
 from .models import Base
@@ -54,7 +55,8 @@ app.include_router(user.router)
 app.include_router(inventory.router)
 app.include_router(admin.router)
 app.include_router(e_commerce.router)
+# app.include_router(chatbot.router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info") 
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")

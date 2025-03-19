@@ -30,6 +30,27 @@ ZALOPAY_CALLBACK_URL = os.getenv("ZALOPAY_CALLBACK_URL")
 
 # Verify environment variables
 def verify_env() -> bool:
+    """
+    Tên Function: verify_env
+    
+    1. Mô tả ngắn gọn:
+    Kiểm tra các biến môi trường cần thiết cho ZaloPay.
+    
+    2. Mô tả công dụng:
+    Xác minh rằng tất cả các biến môi trường bắt buộc cho việc tích hợp ZaloPay
+    đã được cấu hình đúng. Giúp đảm bảo hệ thống được cấu hình đầy đủ trước khi
+    thực hiện các giao dịch.
+    
+    3. Các tham số đầu vào:
+    - Không có tham số đầu vào
+    
+    4. Giá trị trả về:
+    - bool: True nếu tất cả biến môi trường tồn tại, False nếu thiếu bất kỳ biến nào
+    
+    5. Ví dụ sử dụng:
+    >>> if not verify_env():
+    >>>     raise Exception("ZaloPay configuration is incomplete")
+    """
     required_vars = [
         'ZALOPAY_APP_ID',
         'ZALOPAY_KEY1',
@@ -56,6 +77,41 @@ class ZaloPayError(Exception):
     pass
 
 def create_zalopay_order(order_id: int, user_id: int, amount: float, items: list, payment_method: str = "zalopayapp") -> Dict[str, Any]:
+    """
+    Tên Function: create_zalopay_order
+    
+    1. Mô tả ngắn gọn:
+    Tạo đơn hàng thanh toán mới trên ZaloPay.
+    
+    2. Mô tả công dụng:
+    Khởi tạo một giao dịch thanh toán mới trên nền tảng ZaloPay bằng cách tạo một
+    yêu cầu thanh toán với các thông tin đơn hàng và người dùng. Hỗ trợ nhiều
+    phương thức thanh toán khác nhau như ví ZaloPay, ATM, thẻ tín dụng.
+    
+    3. Các tham số đầu vào:
+    - order_id (int): ID của đơn hàng trong hệ thống
+    - user_id (int): ID của người dùng thực hiện thanh toán
+    - amount (float): Số tiền cần thanh toán
+    - items (list): Danh sách các mặt hàng trong đơn hàng
+    - payment_method (str, optional): Phương thức thanh toán (mặc định: "zalopayapp")
+    
+    4. Giá trị trả về:
+    - Dict[str, Any]: Thông tin đơn hàng ZaloPay bao gồm:
+      + order_url: URL thanh toán
+      + zp_trans_id: Mã giao dịch ZaloPay
+      + return_code: Mã kết quả (1 = thành công)
+      + return_message: Thông báo kết quả
+    
+    5. Ví dụ sử dụng:
+    >>> order_data = {
+    >>>     "items": [{"name": "Sản phẩm A", "amount": 100000}],
+    >>>     "order_id": 123,
+    >>>     "user_id": 456,
+    >>>     "amount": 100000
+    >>> }
+    >>> result = create_zalopay_order(**order_data)
+    >>> payment_url = result["order_url"]
+    """
     logger.info(f"Creating ZaloPay order for order_id: {order_id}, user_id: {user_id}, amount: {amount}, payment_method: {payment_method}")
     start_time = time.time()
     
@@ -125,6 +181,34 @@ def create_zalopay_order(order_id: int, user_id: int, amount: float, items: list
         raise ZaloPayError(str(e))
 
 def verify_callback(data: Dict[str, Any]) -> bool:
+    """
+    Tên Function: verify_callback
+    
+    1. Mô tả ngắn gọn:
+    Xác thực tính hợp lệ của dữ liệu callback từ ZaloPay.
+    
+    2. Mô tả công dụng:
+    Kiểm tra tính xác thực của dữ liệu callback được gửi từ ZaloPay sau khi giao dịch
+    hoàn tất. Sử dụng MAC (Message Authentication Code) để đảm bảo dữ liệu không bị
+    thay đổi trong quá trình truyền tải.
+    
+    3. Các tham số đầu vào:
+    - data (Dict[str, Any]): Dictionary chứa dữ liệu callback từ ZaloPay, bao gồm:
+      + mac: Mã xác thực MAC
+      + data: Chuỗi dữ liệu gốc
+    
+    4. Giá trị trả về:
+    - bool: True nếu dữ liệu hợp lệ và chưa bị thay đổi, False nếu không hợp lệ
+    
+    5. Ví dụ sử dụng:
+    >>> callback_data = {
+    >>>     "data": "encrypted_data_string",
+    >>>     "mac": "mac_signature"
+    >>> }
+    >>> is_valid = verify_callback(callback_data)
+    >>> if is_valid:
+    >>>     process_payment()
+    """
     logger.info("Verifying ZaloPay callback data")
     try:
         received_mac = data.get("mac")
@@ -154,6 +238,32 @@ def verify_callback(data: Dict[str, Any]) -> bool:
         return False
 
 def query_order_status(app_trans_id: str) -> Dict[str, Any]:
+    """
+    Tên Function: query_order_status
+    
+    1. Mô tả ngắn gọn:
+    Truy vấn trạng thái đơn hàng từ ZaloPay.
+    
+    2. Mô tả công dụng:
+    Gửi yêu cầu đến ZaloPay để kiểm tra trạng thái hiện tại của một giao dịch.
+    Hữu ích để xác nhận xem giao dịch đã được thanh toán thành công hay chưa.
+    
+    3. Các tham số đầu vào:
+    - app_trans_id (str): Mã giao dịch của ứng dụng (định dạng: yyMMdd_xxxxxx)
+    
+    4. Giá trị trả về:
+    - Dict[str, Any]: Thông tin trạng thái đơn hàng, bao gồm:
+      + return_code: Mã kết quả (1 = thành công)
+      + return_message: Thông báo kết quả
+      + sub_return_code: Mã kết quả phụ
+      + sub_return_message: Thông báo kết quả phụ
+      + is_processing: Trạng thái xử lý
+    
+    5. Ví dụ sử dụng:
+    >>> status = query_order_status("230317_123456")
+    >>> if status["return_code"] == 1:
+    >>>     print(f"Trạng thái giao dịch: {status['sub_return_message']}")
+    """
     logger.info(f"Querying order status for app_trans_id: {app_trans_id}")
     start_time = time.time()
     

@@ -26,6 +26,7 @@ venv/
 env/
 ENV/
 .env
+.env.local
 
 # IDE specific files
 .idea/
@@ -85,7 +86,19 @@ __pycache__/
 *.pem
 *.key
 
-# Specific documentation files
+# Project specific
+chatbot.md
+update_chatbot.md
 zalo_pay.md
 huong_dan.md
 zalopay_integration.md
+
+# Large data files
+# Uncomment if you don't want to track PDF files
+# Data/*.pdf
+
+# OS specific
+# Mac OS
+.DS_Store
+# Windows
+Thumbs.db
